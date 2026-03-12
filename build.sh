@@ -6,7 +6,7 @@ FILE_PATH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
 # Generate .env if not exists
 if [[ ! -f "${FILE_PATH}/.env" ]]; then
-    "${FILE_PATH}/setup.sh" --base-path "${FILE_PATH}"
+    "${FILE_PATH}/docker_setup_helper/src/setup.sh" --base-path "${FILE_PATH}"
 fi
 
 # Build target: devel (default), test, runtime
