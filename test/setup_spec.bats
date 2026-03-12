@@ -149,32 +149,28 @@ esac'
 }
 
 # ════════════════════════════════════════════════════════════════════
-# _read_ws_path
-# ════════════════════════════════════════════════════════════════════
-
-@test "_read_ws_path returns user input when provided" {
-    run bash -c "
-        source /source/src/setup.sh
-        _read_ws_path '/default/path'
-    " <<< "/my/custom/path"
-    assert_success
-    assert_output "/my/custom/path"
-}
-
-@test "_read_ws_path returns default when input is empty" {
-    run bash -c "
-        source /source/src/setup.sh
-        _read_ws_path '/default/path'
-    " <<< ""
-    assert_success
-    assert_output "/default/path"
-}
-
-# ════════════════════════════════════════════════════════════════════
 # detect_ws_path
 # ════════════════════════════════════════════════════════════════════
 
-@test "detect_ws_path strategy 1: finds _ws component in path" {
+@test "detect_ws_path strategy 1: docker_* finds sibling *_ws" {
+    local _ws_dir="${TEMP_DIR}/myapp_ws"
+    local _proj_dir="${TEMP_DIR}/docker_myapp"
+    mkdir -p "${_ws_dir}" "${_proj_dir}"
+    local _result
+    detect_ws_path _result "${_proj_dir}"
+    assert_equal "${_result}" "${_ws_dir}"
+}
+
+@test "detect_ws_path strategy 1: docker_* without sibling falls through" {
+    local _proj_dir="${TEMP_DIR}/docker_nosibling"
+    mkdir -p "${_proj_dir}"
+    local _result
+    detect_ws_path _result "${_proj_dir}"
+    # No sibling *_ws, no *_ws in path → falls back to parent
+    assert_equal "${_result}" "${TEMP_DIR}"
+}
+
+@test "detect_ws_path strategy 2: finds _ws component in path" {
     local _ws_dir="${TEMP_DIR}/myproject_ws"
     local _sub_dir="${_ws_dir}/docker_ros"
     mkdir -p "${_sub_dir}"
@@ -183,15 +179,12 @@ esac'
     assert_equal "${_result}" "${_ws_dir}"
 }
 
-@test "detect_ws_path strategy 2: prompts when no _ws found" {
-    local _expected="${TEMP_DIR}/prompted_workspace"
+@test "detect_ws_path strategy 3: falls back to parent directory" {
     local _no_ws="${TEMP_DIR}/no_ws_here"
     mkdir -p "${_no_ws}"
-    _read_ws_path() { echo "${_expected}"; }
     local _result
     detect_ws_path _result "${_no_ws}"
-    assert [ -d "${_expected}" ]
-    assert_equal "${_result}" "${_expected}"
+    assert_equal "${_result}" "${TEMP_DIR}"
 }
 
 # ════════════════════════════════════════════════════════════════════
@@ -288,8 +281,6 @@ EOF
 
 @test "_msg returns English messages by default" {
     _LANG="en"
-    assert_equal "$(_msg ws_not_found)" "Workspace not found, please enter manually"
-    assert_equal "$(_msg ws_prompt)"    "Enter workspace path"
     assert_equal "$(_msg env_done)"     ".env updated"
     assert_equal "$(_msg env_comment)"  "Auto-detected fields, do not edit manually. Edit WS_PATH if needed"
     assert_equal "$(_msg unknown_arg)"  "Unknown argument"
@@ -297,8 +288,6 @@ EOF
 
 @test "_msg returns Chinese messages when _LANG=zh" {
     _LANG="zh"
-    assert_equal "$(_msg ws_not_found)" "工作區路徑未找到，請手動輸入"
-    assert_equal "$(_msg ws_prompt)"    "請輸入工作區路徑"
     assert_equal "$(_msg env_done)"     ".env 更新完成"
     assert_equal "$(_msg env_comment)"  "自動偵測欄位請勿手動修改，如需變更 WS_PATH 可直接編輯此檔案"
     assert_equal "$(_msg unknown_arg)"  "未知參數"

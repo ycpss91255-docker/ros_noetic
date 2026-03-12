@@ -20,16 +20,12 @@ _msg() {
     case "${_LANG}" in
         zh)
             case "${_key}" in
-                ws_not_found)  echo "工作區路徑未找到，請手動輸入" ;;
-                ws_prompt)     echo "請輸入工作區路徑" ;;
                 env_done)      echo ".env 更新完成" ;;
                 env_comment)   echo "自動偵測欄位請勿手動修改，如需變更 WS_PATH 可直接編輯此檔案" ;;
                 unknown_arg)   echo "未知參數" ;;
             esac ;; # LCOV_EXCL_LINE
         *) # LCOV_EXCL_LINE
             case "${_key}" in
-                ws_not_found)  echo "Workspace not found, please enter manually" ;;
-                ws_prompt)     echo "Enter workspace path" ;;
                 env_done)      echo ".env updated" ;;
                 env_comment)   echo "Auto-detected fields, do not edit manually. Edit WS_PATH if needed" ;;
                 unknown_arg)   echo "Unknown argument" ;;
@@ -139,24 +135,12 @@ detect_image_name() {
 }
 
 # ════════════════════════════════════════════════════════════════════
-# _read_ws_path  (internal, extracted for testability)
-#
-# Usage: _read_ws_path <default_path>
-# Prints: user input or default
-# ════════════════════════════════════════════════════════════════════
-_read_ws_path() {
-    local _default="${1}"
-    local _input=""
-    read -rp "[setup] $(_msg ws_prompt) [${_default}]: " _input
-    echo "${_input:-${_default}}"
-}
-
-# ════════════════════════════════════════════════════════════════════
 # detect_ws_path
 #
 # Workspace detection strategy (in order):
-#   1. Traverse path upward looking for a *_ws component
-#   2. Prompt user interactively
+#   1. If current directory is docker_*, use sibling *_ws (strip prefix)
+#   2. Traverse path upward looking for a *_ws component
+#   3. Fall back to parent directory
 #
 # Compatible with get_param.sh get_workdir behaviour.
 #
@@ -166,7 +150,20 @@ detect_ws_path() {
     local -n _outvar="${1:?"${FUNCNAME[0]}: missing outvar"}"; shift
     local _base_path="${1:?"${FUNCNAME[0]}: missing base_path"}"
 
-    # Strategy 1: traverse path upward looking for *_ws component
+    local _dirname=""
+    _dirname="$(basename "${_base_path}")"
+
+    # Strategy 1: docker_* directory → look for sibling *_ws
+    if [[ "${_dirname}" == docker_* ]]; then
+        local _name="${_dirname#docker_}"
+        local _sibling="${_base_path}/../${_name}_ws"
+        if [[ -d "${_sibling}" ]]; then
+            _outvar="$(cd "${_sibling}" && pwd -P)"
+            return 0
+        fi
+    fi
+
+    # Strategy 2: traverse path upward looking for *_ws component
     local _check="${_base_path}"
     while [[ "${_check}" != "/" && "${_check}" != "." ]]; do
         if [[ "$(basename "${_check}")" == *_ws && -d "${_check}" ]]; then
@@ -176,14 +173,8 @@ detect_ws_path() {
         _check="$(dirname "${_check}")"
     done
 
-    # Strategy 2: prompt user
-    local _default=""
-    _default="$(cd "${_base_path}/.." && pwd -P)/workspace"
-    printf "[setup] %s\n" "$(_msg ws_not_found)" >&2
-    local _ws_read_result=""
-    _ws_read_result="$(_read_ws_path "${_default}")"
-    mkdir -p "${_ws_read_result}"
-    _outvar="${_ws_read_result}"
+    # Strategy 3: fall back to parent directory
+    _outvar="$(cd "${_base_path}/.." && pwd -P)"
 }
 
 # ════════════════════════════════════════════════════════════════════
