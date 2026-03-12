@@ -107,6 +107,7 @@ ARG USER="initial"
 ARG GROUP="initial"
 ARG ENTRYPOINT_FILE="entrypoint.sh"
 ARG CONFIG_DIR="/tmp/config"
+ARG CONFIG_SRC="docker_setup_helper/src/config"
 
 # ROS 1 dev tools
 RUN apt-get update && \
@@ -118,7 +119,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --chmod=0755 "./${ENTRYPOINT_FILE}" "/entrypoint.sh"
-COPY --chown="${USER}":"${GROUP}" --chmod=0755 "config" "${CONFIG_DIR}"
+COPY --chown="${USER}":"${GROUP}" --chmod=0755 "${CONFIG_SRC}" "${CONFIG_DIR}"
 
 USER "${USER}"
 
