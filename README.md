@@ -2,7 +2,7 @@
 
 **[English](README.md)** | **[繁體中文](README.zh-TW.md)**
 
-> **TL;DR** — One-command ROS 1 Noetic containerized dev environment. Auto-detects UID/GID/GPU, supports X11 GUI forwarding, multi-stage build with smoke test verification.
+> **TL;DR** — One-command ROS 1 Noetic containerized dev environment. Auto-detects UID/GID, supports X11 GUI forwarding, multi-stage build with smoke test verification.
 >
 > ```bash
 > ./build.sh && ./run.sh
@@ -27,9 +27,8 @@
 - **Multi-stage build**: sys → base → devel / test / runtime, choose as needed
 - **Smoke Test**: Bats tests run automatically during build to verify environment
 - **Docker Compose**: single `compose.yaml` manages all targets
-- **Auto-detection**: `setup.sh` auto-detects UID/GID/GPU/workspace, generates `.env`
+- **Auto-detection**: `setup.sh` auto-detects UID/GID/workspace, generates `.env`
 - **Modular config**: shell config managed via [docker_setup_helper](https://github.com/ycpss91255/docker_setup_helper) subtree
-- **GPU support**: auto-detects NVIDIA Container Toolkit
 - **X11 forwarding**: supports GUI applications (RViz, Terminator, etc.)
 
 ## Quick Start
