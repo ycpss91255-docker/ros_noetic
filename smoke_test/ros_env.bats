@@ -6,8 +6,8 @@ setup() {
 
 # -------------------- ROS environment --------------------
 
-@test "ROS_DISTRO is noetic" {
-    assert_equal "${ROS_DISTRO}" "noetic"
+@test "ROS_DISTRO is set" {
+    assert [ -n "${ROS_DISTRO}" ]
 }
 
 @test "ROS setup.bash exists" {
@@ -27,6 +27,21 @@ setup() {
 
 @test "rosrun command is available after sourcing ROS" {
     run bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && which rosrun"
+    assert_success
+}
+
+@test "rosnode command is available after sourcing ROS" {
+    run bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && which rosnode"
+    assert_success
+}
+
+@test "roslaunch command is available after sourcing ROS" {
+    run bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && which roslaunch"
+    assert_success
+}
+
+@test "rosmsg command is available after sourcing ROS" {
+    run bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && which rosmsg"
     assert_success
 }
 

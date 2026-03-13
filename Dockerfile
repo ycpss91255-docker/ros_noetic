@@ -103,8 +103,8 @@ RUN apt-get update && \
 ############################## devel ##############################
 FROM base AS devel
 
-ARG USER="initial"
-ARG GROUP="initial"
+ARG USER
+ARG GROUP
 ARG ENTRYPOINT_FILE="entrypoint.sh"
 ARG CONFIG_DIR="/tmp/config"
 ARG CONFIG_SRC="docker_setup_helper/src/config"
@@ -155,15 +155,13 @@ ENV BATS_LIB_PATH="/usr/lib/bats"
 
 COPY smoke_test/ /smoke_test/
 
-ARG USER="initial"
+ARG USER
 USER "${USER}"
 
 RUN bats /smoke_test/
 
 ############################## runtime-base ##############################
 FROM sys AS runtime-base
-
-ARG USER="initial"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -176,8 +174,8 @@ RUN apt-get update && \
 ############################## runtime ##############################
 FROM runtime-base AS runtime
 
-ARG ROS_DISTRO="noetic"
-ARG USER="initial"
+ARG ROS_DISTRO
+ARG USER
 
 # Install only the ROS packages required to run your nodes.
 # Customize this list for your application.
