@@ -122,8 +122,8 @@ docker compose --profile runtime run --rm runtime
 
 | 優先序 | 規則 | 範例路徑 | 結果 |
 |:------:|------|----------|------|
-| 1 | 掃描路徑（右→左）找 `*_ws` → 取前綴 | `/home/user/ros_noetic_ws/docker_ros_noetic` | `ros_noetic` |
-| 2 | 最後一層目錄符合 `docker_*` → 去前綴 | `/home/user/docker_ros_noetic` | `ros_noetic` |
+| 1 | 最後一層目錄符合 `docker_*` → 去前綴 | `/home/user/docker_ros_noetic` | `ros_noetic` |
+| 2 | 掃描路徑（右→左）找 `*_ws` → 取前綴 | `/home/user/ros_noetic_ws/docker_ros_noetic` | `ros_noetic` |
 | 3 | 讀取 `.env.example` 中的 `IMAGE_NAME` | — | `.env.example` 中的值 |
 | 4 | 退回值 | — | `unknown` |
 

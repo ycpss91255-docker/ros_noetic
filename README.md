@@ -122,8 +122,8 @@ Scans the repo directory path to derive the image name:
 
 | Priority | Rule | Example Path | Result |
 |:--------:|------|-------------|--------|
-| 1 | Scan path (right→left) for `*_ws` → use prefix | `/home/user/ros_noetic_ws/docker_ros_noetic` | `ros_noetic` |
-| 2 | Last directory matches `docker_*` → strip prefix | `/home/user/docker_ros_noetic` | `ros_noetic` |
+| 1 | Last directory matches `docker_*` → strip prefix | `/home/user/docker_ros_noetic` | `ros_noetic` |
+| 2 | Scan path (right→left) for `*_ws` → use prefix | `/home/user/ros_noetic_ws/docker_ros_noetic` | `ros_noetic` |
 | 3 | Read `IMAGE_NAME` from `.env.example` | — | value in `.env.example` |
 | 4 | Fallback | — | `unknown` |
 
