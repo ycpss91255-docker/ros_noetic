@@ -58,7 +58,9 @@ Full dev environment with catkin-tools, tmux, terminator, vim, git, etc.
 
 ```bash
 ./build.sh                       # Build (default: devel)
+./build.sh --no-env test         # Build without refreshing .env
 ./run.sh                         # Start (default: devel)
+./run.sh --no-env -d             # Background start, skip .env refresh
 ./exec.sh                        # Enter running container
 
 docker compose build devel       # Equivalent command
@@ -93,7 +95,7 @@ docker compose --profile runtime run --rm runtime
 
 ### .env Parameters
 
-Auto-generated on first `./build.sh` or `./run.sh`, or refer to `.env.example` to create manually:
+Automatically refreshed on every `./build.sh` or `./run.sh` (use `--no-env` to skip). Refer to `.env.example` to create manually:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
