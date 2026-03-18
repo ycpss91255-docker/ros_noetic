@@ -108,6 +108,51 @@ docker compose --profile runtime run --rm runtime
 | `ROS_DISTRO` | ROS 發行版（可選） | `noetic` |
 | `ROS_TAG` | ROS 映像標籤（可選） | `ros-base` |
 
+### 自動偵測細節
+
+`setup.sh` 自動偵測系統參數並產生 `.env`。以下記錄兩個較複雜的偵測邏輯。
+
+<details>
+<summary>展開查看偵測邏輯</summary>
+
+#### IMAGE_NAME 推導
+
+掃描 repo 目錄路徑，推導映像名稱：
+
+| 優先序 | 規則 | 範例路徑 | 結果 |
+|:------:|------|----------|------|
+| 1 | 掃描路徑（右→左）找 `*_ws` → 取前綴 | `/home/user/ros_noetic_ws/docker_ros_noetic` | `ros_noetic` |
+| 2 | 最後一層目錄符合 `docker_*` → 去前綴 | `/home/user/docker_ros_noetic` | `ros_noetic` |
+| 3 | 讀取 `.env.example` 中的 `IMAGE_NAME` | — | `.env.example` 中的值 |
+| 4 | 退回值 | — | `unknown` |
+
+#### WS_PATH 工作區偵測
+
+三策略搜尋，定位工作區掛載路徑：
+
+| 優先序 | 策略 | 條件 | 結果 |
+|:------:|------|------|------|
+| 1 | 同層掃描 | 目前目錄為 `docker_*` 且同層有 `*_ws` | 同層 `*_ws` 絕對路徑 |
+| 2 | 向上遍歷 | 沿路徑向上尋找第一個 `*_ws` 元件 | 該 `*_ws` 目錄 |
+| 3 | 退回值 | 以上皆不符合 | repo 的上層目錄 |
+
+**範例**（策略 1）：
+```
+/home/user/
+├── docker_ros_noetic/    ← repo（目前目錄 = docker_ros_noetic）
+└── ros_noetic_ws/        ← 偵測為 WS_PATH
+```
+
+**範例**（策略 2）：
+```
+/home/user/ros_noetic_ws/src/docker_ros_noetic/
+                         ↑ 向上遍歷時找到 *_ws
+```
+
+> 若 `.env` 已存在且 `WS_PATH` 指向有效目錄，則跳過偵測，保留現有值。
+
+</details>
+
 ### 語言設定
 
 `setup.sh` 預設顯示英文訊息，可透過環境變數切換為中文：
@@ -164,11 +209,58 @@ graph TD
 
 ### Smoke Test 涵蓋範圍
 
-位於 `smoke_test/ros_env.bats`：
+位於 `smoke_test/ros_env.bats`，在 `docker build --target test` 時自動執行，共 **32** 項。
 
-- ROS 環境：`ROS_DISTRO`、`setup.bash` 可 source、`rostopic`/`rosrun` 存在
-- Dev tools：`catkin`、`python3`、`git` 可用
-- 系統：非 root 用戶、timezone、locale、work 目錄可寫
+<details>
+<summary>展開查看測試細項</summary>
+
+#### ROS 環境 (9)
+
+| 測試項目 | 說明 |
+|----------|------|
+| `ROS_DISTRO` | 值為 `noetic` |
+| `setup.bash` | 檔案存在 |
+| `setup.bash` | 可 source |
+| `rostopic` | source ROS 後可用 |
+| `rosrun` | source ROS 後可用 |
+| `rosnode` | source ROS 後可用 |
+| `roslaunch` | source ROS 後可用 |
+| `rosmsg` | source ROS 後可用 |
+| `catkin` | 可用 |
+
+#### 基礎工具 (11)
+
+| 測試項目 | 說明 |
+|----------|------|
+| `python3` | 可用 |
+| `pip3` | 可用 |
+| `git` | 可用 |
+| `vim` | 可用 |
+| `curl` | 可用 |
+| `wget` | 可用 |
+| `tmux` | 可用 |
+| `tree` | 可用 |
+| `htop` | 可用 |
+| `sudo` | 可用 |
+| `sudo` | 免密碼執行 |
+
+#### 系統 (12)
+
+| 測試項目 | 說明 |
+|----------|------|
+| 用戶 | 非 root |
+| `HOME` | 已設定且存在 |
+| 時區 | `Asia/Taipei` |
+| `LANG` | `en_US.UTF-8` |
+| `LC_ALL` | `en_US.UTF-8` |
+| `NVIDIA_VISIBLE_DEVICES` | `all` |
+| `NVIDIA_DRIVER_CAPABILITIES` | `all` |
+| `entrypoint.sh` | 存在且可執行 |
+| work 目錄 | 存在 |
+| work 目錄 | 可寫入 |
+| `bash-completion` | 已安裝 |
+
+</details>
 
 ## 目錄結構
 
