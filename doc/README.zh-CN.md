@@ -1,6 +1,6 @@
 # ROS Noetic Docker Environment
 
-**[English](README.md)** | **[繁體中文](README.zh-TW.md)** | **[简体中文](README.zh-CN.md)** | **[日本語](README.ja.md)**
+**[English](../README.md)** | **[繁體中文](README.zh-TW.md)** | **[简体中文](README.zh-CN.md)** | **[日本語](README.ja.md)**
 
 > **TL;DR** — 一键构建 ROS 1 Noetic 容器化开发环境。自动检测 UID/GID，支持 X11 GUI 转发，多阶段构建含 smoke test 验证。
 >
