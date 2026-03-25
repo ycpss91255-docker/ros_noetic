@@ -273,7 +273,7 @@ graph TD
 
 ## Smoke Tests
 
-Located in `test/smoke_test/` — executed automatically during `docker build --target test` — **44 tests** total.
+Located in `test/smoke_test/` — executed automatically during `docker build --target test` — **48 tests** total.
 
 <details>
 <summary>Click to expand test details</summary>
@@ -324,7 +324,7 @@ Located in `test/smoke_test/` — executed automatically during `docker build --
 | Work directory | Writable |
 | `bash-completion` | Installed |
 
-#### Script help (12)
+#### Script help (16)
 
 | Test | Description |
 |------|-------------|
@@ -340,6 +340,10 @@ Located in `test/smoke_test/` — executed automatically during `docker build --
 | `stop.sh -h` | Exits 0 |
 | `stop.sh --help` | Exits 0 |
 | `stop.sh -h` | Prints usage |
+| `build.sh -h` | Detects zh from `LANG=zh_TW.UTF-8` |
+| `build.sh -h` | Detects ja from `LANG=ja_JP.UTF-8` |
+| `build.sh -h` | Defaults to en for `LANG=en_US.UTF-8` |
+| `build.sh -h` | `SETUP_LANG` overrides `LANG` |
 
 </details>
 
@@ -370,7 +374,7 @@ ros_noetic/
 │       ├── ros_env.bats
 │       ├── script_help.bats
 │       └── test_helper.bash
-└── docker_setup_helper/         # git subtree (v1.3.1)
+└── docker_setup_helper/         # git subtree (v1.4.0)
     └── src/
         ├── setup.sh             # System detection + .env generation
         └── config/              # shell/pip/terminator/tmux config
@@ -380,5 +384,5 @@ ros_noetic/
 
 ```bash
 git subtree pull --prefix=docker_setup_helper \
-    https://github.com/ycpss91255-docker/docker_setup_helper.git v1.3.1 --squash
+    https://github.com/ycpss91255-docker/docker_setup_helper.git v1.4.0 --squash
 ```
