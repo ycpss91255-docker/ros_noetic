@@ -273,7 +273,7 @@ graph TD
 
 ## Smoke Tests
 
-位于 `test/smoke_test/`，在 `docker build --target test` 时自动执行，共 **44** 项。
+位于 `test/smoke_test/`，在 `docker build --target test` 时自动执行，共 **48** 项。
 
 <details>
 <summary>展开查看测试详情</summary>
@@ -324,7 +324,7 @@ graph TD
 | work 目录 | 可写入 |
 | `bash-completion` | 已安装 |
 
-#### 脚本 help (12)
+#### 脚本 help (16)
 
 | 测试项目 | 说明 |
 |----------|------|
@@ -340,6 +340,10 @@ graph TD
 | `stop.sh -h` | 退出码 0 |
 | `stop.sh --help` | 退出码 0 |
 | `stop.sh -h` | 显示 usage |
+| `build.sh -h` | `LANG=zh_TW.UTF-8` 时检测为 zh |
+| `build.sh -h` | `LANG=ja_JP.UTF-8` 时检测为 ja |
+| `build.sh -h` | `LANG=en_US.UTF-8` 时默认为 en |
+| `build.sh -h` | `SETUP_LANG` 覆盖 `LANG` |
 
 </details>
 
@@ -370,7 +374,7 @@ ros_noetic/
 │       ├── ros_env.bats
 │       ├── script_help.bats
 │       └── test_helper.bash
-└── docker_setup_helper/         # git subtree (v1.3.1)
+└── docker_setup_helper/         # git subtree (v1.4.0)
     └── src/
         ├── setup.sh             # 系统检测 + .env 生成
         └── config/              # shell/pip/terminator/tmux 设置
@@ -380,5 +384,5 @@ ros_noetic/
 
 ```bash
 git subtree pull --prefix=docker_setup_helper \
-    https://github.com/ycpss91255-docker/docker_setup_helper.git v1.3.1 --squash
+    https://github.com/ycpss91255-docker/docker_setup_helper.git v1.4.0 --squash
 ```
