@@ -117,7 +117,7 @@ ARG USER
 ARG GROUP
 ARG ENTRYPOINT_FILE="script/entrypoint.sh"
 ARG CONFIG_DIR="/tmp/config"
-ARG CONFIG_SRC="docker_setup_helper/src/config"
+ARG CONFIG_SRC="docker_template/config"
 
 # ROS 1 dev tools
 RUN apt-get update && \
@@ -175,7 +175,8 @@ RUN ln -sf /opt/bats/bin/bats /usr/local/bin/bats
 
 ENV BATS_LIB_PATH="/usr/lib/bats"
 
-# Smoke test
+# Smoke test (shared tests from docker_template + repo-specific tests)
+COPY docker_template/smoke_test/ /smoke_test/
 COPY test/smoke_test/ /smoke_test/
 
 ARG USER

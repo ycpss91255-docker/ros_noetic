@@ -20,7 +20,7 @@
 - [アーキテクチャ](#アーキテクチャ)
 - [スモークテスト](#スモークテスト)
 - [ディレクトリ構成](#ディレクトリ構成)
-- [docker\_setup\_helper の更新](#docker_setup_helper-の更新)
+- [docker\_template の更新](#docker_template-の更新)
 
 ---
 
@@ -30,7 +30,7 @@
 - **Smoke Test**：ビルド時に Bats テストを自動実行し環境の正確性を検証
 - **Docker Compose**：1 つの `compose.yaml` で全 target を管理
 - **自動検出**：`setup.sh` が UID/GID/workspace を自動検出し `.env` を生成
-- **モジュール化設定**：shell config は [docker_setup_helper](https://github.com/ycpss91255/docker_setup_helper) subtree で管理
+- **モジュール化設定**：shell config は [docker_template](https://github.com/ycpss91255-docker/docker_template) subtree で管理
 - **X11 転送**：GUI アプリケーション対応（RViz、Terminator 等）
 
 ## クイックスタート
@@ -113,7 +113,7 @@ my_robot_project/
 │   ├── run.sh
 │   ├── compose.yaml
 │   ├── Dockerfile
-│   └── docker_setup_helper/
+│   └── docker_template/
 └── ...
 ```
 
@@ -150,7 +150,7 @@ git subtree pull --prefix=docker/ros_noetic \
 > **注意事項**：
 > - ローカルの変更は git で通常通り追跡されます。
 > - 上流があなたが変更したファイルも変更した場合、`subtree pull` で merge conflict が発生する可能性があり、手動で解決が必要です。
-> - subtree 内の `docker_setup_helper/` は**直接変更しないでください** — env リポジトリ自身の subtree として管理されています。
+> - subtree 内の `docker_template/` は**直接変更しないでください** — env リポジトリ自身の subtree として管理されています。
 
 ## 設定
 
@@ -366,23 +366,21 @@ ros_noetic/
 │   ├── README.zh-CN.md          # 簡体字中国語
 │   └── README.ja.md             # 日本語
 ├── .github/workflows/           # CI/CD
-│   ├── main.yaml                # メインパイプライン
-│   ├── build-worker.yaml        # Docker build + smoke test
-│   └── release-worker.yaml      # GitHub Release
+│   └── main.yaml                # CI/CD (docker_template reusable workflows)
 ├── test/
 │   └── smoke_test/              # Bats 環境テスト
-│       ├── ros_env.bats
-│       ├── script_help.bats
-│       └── test_helper.bash
-└── docker_setup_helper/         # git subtree (v1.4.0)
-    └── src/
-        ├── setup.sh             # システム検出 + .env 生成
-        └── config/              # shell/pip/terminator/tmux 設定
+│       └── ros_env.bats         # Repo-specific
+├── docker_template/             # git subtree (v0.1.0)
+│   ├── build.sh, run.sh, ...    # Shared scripts
+│   ├── setup.sh                 # .env generation
+│   ├── smoke_test/              # Shared smoke tests
+│   └── config/                  # shell/pip/terminator/tmux
+└── .docker_template_version
 ```
 
-## docker_setup_helper の更新
+## docker_template の更新
 
 ```bash
-git subtree pull --prefix=docker_setup_helper \
-    https://github.com/ycpss91255-docker/docker_setup_helper.git v1.4.0 --squash
+git subtree pull --prefix=docker_template \
+    https://github.com/ycpss91255-docker/docker_template.git v0.1.0 --squash
 ```
