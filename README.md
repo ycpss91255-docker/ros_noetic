@@ -20,7 +20,7 @@
 - [Architecture](#architecture)
 - [Smoke Tests](#smoke-tests)
 - [Directory Structure](#directory-structure)
-- [Updating docker\_setup\_helper](#updating-docker_setup_helper)
+- [Updating docker\_template](#updating-docker_template)
 
 ---
 
@@ -30,7 +30,7 @@
 - **Smoke Test**: Bats tests run automatically during build to verify environment
 - **Docker Compose**: single `compose.yaml` manages all targets
 - **Auto-detection**: `setup.sh` auto-detects UID/GID/workspace, generates `.env`
-- **Modular config**: shell config managed via [docker_setup_helper](https://github.com/ycpss91255/docker_setup_helper) subtree
+- **Modular config**: shell config managed via [docker_template](https://github.com/ycpss91255-docker/docker_template) subtree
 - **X11 forwarding**: supports GUI applications (RViz, Terminator, etc.)
 
 ## Quick Start
@@ -113,7 +113,7 @@ my_robot_project/
 │   ├── run.sh
 │   ├── compose.yaml
 │   ├── Dockerfile
-│   └── docker_setup_helper/
+│   └── docker_template/
 └── ...
 ```
 
@@ -150,7 +150,7 @@ git subtree pull --prefix=docker/ros_noetic \
 > **Notes**:
 > - Local modifications are tracked by git normally.
 > - `subtree pull` may produce merge conflicts if upstream changed the same files you modified locally.
-> - Do **not** modify `docker_setup_helper/` inside the subtree — it is managed by the env repo's own subtree.
+> - Do **not** modify `docker_template/` inside the subtree — it is managed by the env repo's own subtree.
 
 ## Configuration
 
@@ -365,24 +365,22 @@ ros_noetic/
 │   ├── README.zh-TW.md          # Traditional Chinese
 │   ├── README.zh-CN.md          # Simplified Chinese
 │   └── README.ja.md             # Japanese
-├── .github/workflows/           # CI/CD
-│   ├── main.yaml                # Main pipeline
-│   ├── build-worker.yaml        # Docker build + smoke test
-│   └── release-worker.yaml      # GitHub Release
+├── .github/workflows/
+│   └── main.yaml                # CI/CD (calls docker_template reusable workflows)
 ├── test/
-│   └── smoke_test/              # Bats environment tests
-│       ├── ros_env.bats
-│       ├── script_help.bats
-│       └── test_helper.bash
-└── docker_setup_helper/         # git subtree (v1.4.0)
-    └── src/
-        ├── setup.sh             # System detection + .env generation
-        └── config/              # shell/pip/terminator/tmux config
+│   └── smoke_test/
+│       └── ros_env.bats         # Repo-specific tests
+├── docker_template/             # git subtree (v0.1.0)
+│   ├── build.sh, run.sh, ...    # Shared scripts (symlinked at root)
+│   ├── setup.sh                 # System detection + .env generation
+│   ├── smoke_test/              # Shared smoke tests
+│   └── config/                  # shell/pip/terminator/tmux config
+└── .docker_template_version
 ```
 
-## Updating docker_setup_helper
+## Updating docker_template
 
 ```bash
-git subtree pull --prefix=docker_setup_helper \
-    https://github.com/ycpss91255-docker/docker_setup_helper.git v1.4.0 --squash
+git subtree pull --prefix=docker_template \
+    https://github.com/ycpss91255-docker/docker_template.git v0.1.0 --squash
 ```
