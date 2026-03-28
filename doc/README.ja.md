@@ -245,7 +245,7 @@ graph TD
     sys --> base["base\nsudo・git・vim・tmux・terminator・python3..."]:::stage
     base --> devel["devel\ncatkin-tools・shell config・pip"]:::stage
 
-    bats-src --> test["test  ⚡ ephemeral\nsmoke_test/ 実行後に破棄"]:::ephemeral
+    bats-src --> test["test（一時的）\nsmoke_test/ 実行後に破棄"]:::ephemeral
     bats-ext --> test
     devel --> test
 
