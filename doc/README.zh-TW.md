@@ -370,7 +370,7 @@ ros_noetic/
 ├── test/
 │   └── smoke_test/
 │       └── ros_env.bats         # Repo 專屬測試
-├── docker_template/             # git subtree (v0.1.0)
+├── docker_template/             # git subtree (v0.3.0)
 │   ├── build.sh, run.sh, ...    # 共用腳本（root 層有 symlink）
 │   ├── setup.sh                 # 系統偵測 + .env 產生
 │   ├── smoke_test/              # 共用 smoke tests
@@ -381,6 +381,7 @@ ros_noetic/
 ## 更新 docker_template
 
 ```bash
+# Or use: ./docker_template/scripts/upgrade.sh
 git subtree pull --prefix=docker_template \
-    https://github.com/ycpss91255-docker/docker_template.git v0.1.0 --squash
+    https://github.com/ycpss91255-docker/docker_template.git v0.3.0 --squash
 ```
