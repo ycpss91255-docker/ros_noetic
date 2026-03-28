@@ -240,12 +240,12 @@ graph TD
     EXT1 --> bats-src["bats-src"]:::tool
     EXT2 --> bats-ext["bats-extensions"]:::tool
 
-    EXT3 --> sys["sys\nuser/group・locale・timezone"]:::stage
+    EXT3 --> sys["sys\n使用者/群組・語系・時區"]:::stage
 
     sys --> base["base\nsudo・git・vim・tmux・terminator・python3..."]:::stage
     base --> devel["devel\ncatkin-tools・shell config・pip"]:::stage
 
-    bats-src --> test["test  ⚡ ephemeral\nsmoke_test/ 執行後即丟"]:::ephemeral
+    bats-src --> test["test  ⚡ 暫時性\nsmoke_test/ 執行後丟棄"]:::ephemeral
     bats-ext --> test
     devel --> test
 
@@ -264,7 +264,7 @@ graph TD
 |-------|------|------|
 | `bats-src` | `bats/bats:latest` | bats 二進位來源，不出貨 |
 | `bats-extensions` | `alpine:latest` | bats-support、bats-assert，不出貨 |
-| `sys` | `ros:noetic-ros-base-focal` | OS 基礎：user/group、locale、timezone |
+| `sys` | `ros:noetic-ros-base-focal` | OS 基礎：使用者/群組、語系、時區 |
 | `base` | `sys` | 通用開發工具（apt） |
 | `devel` | `base` | 完整開發環境，含 shell 設定 |
 | `test` | `devel` | 注入 bats，執行 smoke_test/，build 完即丟 |
