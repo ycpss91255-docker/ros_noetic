@@ -20,7 +20,7 @@
 - [Architecture](#architecture)
 - [Smoke Tests](#smoke-tests)
 - [Directory Structure](#directory-structure)
-- [Updating docker\_template](#updating-docker_template)
+- [Updating docker\_template](#updating-template)
 
 ---
 
@@ -30,7 +30,7 @@
 - **Smoke Test**: Bats tests run automatically during build to verify environment
 - **Docker Compose**: single `compose.yaml` manages all targets
 - **Auto-detection**: `setup.sh` auto-detects UID/GID/workspace, generates `.env`
-- **Modular config**: shell config managed via [docker_template](https://github.com/ycpss91255-docker/docker_template) subtree
+- **Modular config**: shell config managed via [template](https://github.com/ycpss91255-docker/template) subtree
 - **X11 forwarding**: supports GUI applications (RViz, Terminator, etc.)
 
 ## Quick Start
@@ -113,7 +113,7 @@ my_robot_project/
 │   ├── run.sh
 │   ├── compose.yaml
 │   ├── Dockerfile
-│   └── docker_template/
+│   └── template/
 └── ...
 ```
 
@@ -150,7 +150,7 @@ git subtree pull --prefix=docker/ros_noetic \
 > **Notes**:
 > - Local modifications are tracked by git normally.
 > - `subtree pull` may produce merge conflicts if upstream changed the same files you modified locally.
-> - Do **not** modify `docker_template/` inside the subtree — it is managed by the env repo's own subtree.
+> - Do **not** modify `template/` inside the subtree — it is managed by the env repo's own subtree.
 
 ## Configuration
 
@@ -267,13 +267,13 @@ graph TD
 | `sys` | `ros:noetic-ros-base-focal` | OS base: user/group, locale, timezone |
 | `base` | `sys` | Common dev tools (apt) |
 | `devel` | `base` | Full dev environment with shell config |
-| `test` | `devel` | Injects bats, runs smoke_test/, discarded after build |
+| `test` | `devel` | Injects bats, runs smoke/, discarded after build |
 | `runtime-base` | `sys` | Minimal runtime base, no dev tools |
 | `runtime` | `runtime-base` | Adds required ROS packages |
 
 ## Smoke Tests
 
-Located in `test/smoke_test/` — executed automatically during `docker build --target test` — **48 tests** total.
+Located in `test/smoke/` — executed automatically during `docker build --target test` — **48 tests** total.
 
 <details>
 <summary>Click to expand test details</summary>
@@ -366,22 +366,22 @@ ros_noetic/
 │   ├── README.zh-CN.md          # Simplified Chinese
 │   └── README.ja.md             # Japanese
 ├── .github/workflows/
-│   └── main.yaml                # CI/CD (calls docker_template reusable workflows)
+│   └── main.yaml                # CI/CD (calls template reusable workflows)
 ├── test/
-│   └── smoke_test/
+│   └── smoke/
 │       └── ros_env.bats         # Repo-specific tests
-├── docker_template/             # git subtree (v0.3.0)
+├── template/             # git subtree (v0.3.0)
 │   ├── build.sh, run.sh, ...    # Shared scripts (symlinked at root)
 │   ├── setup.sh                 # System detection + .env generation
-│   ├── smoke_test/              # Shared smoke tests
+│   ├── smoke/              # Shared smoke tests
 │   └── config/                  # shell/pip/terminator/tmux config
-└── .docker_template_version
+└── .template_version
 ```
 
-## Updating docker_template
+## Updating template
 
 ```bash
-# Or use: ./docker_template/scripts/upgrade.sh
-git subtree pull --prefix=docker_template \
-    https://github.com/ycpss91255-docker/docker_template.git v0.3.0 --squash
+# Or use: ./template/scripts/upgrade.sh
+git subtree pull --prefix=template \
+    https://github.com/ycpss91255-docker/template.git v0.3.0 --squash
 ```

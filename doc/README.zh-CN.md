@@ -20,7 +20,7 @@
 - [架构](#架构)
 - [Smoke Tests](#smoke-tests)
 - [目录结构](#目录结构)
-- [更新 docker\_template](#更新-docker_template)
+- [更新 docker\_template](#更新-template)
 
 ---
 
@@ -30,7 +30,7 @@
 - **Smoke Test**：build 时自动跑 Bats 测试验证环境正确性
 - **Docker Compose**：一个 `compose.yaml` 管理所有 target
 - **自动检测**：`setup.sh` 自动检测 UID/GID/workspace，生成 `.env`
-- **模块化设置**：shell config 通过 [docker_template](https://github.com/ycpss91255-docker/docker_template) subtree 管理
+- **模块化设置**：shell config 通过 [template](https://github.com/ycpss91255-docker/template) subtree 管理
 - **X11 转发**：支持 GUI 应用程序（RViz、Terminator 等）
 
 ## 快速开始
@@ -113,7 +113,7 @@ my_robot_project/
 │   ├── run.sh
 │   ├── compose.yaml
 │   ├── Dockerfile
-│   └── docker_template/
+│   └── template/
 └── ...
 ```
 
@@ -150,7 +150,7 @@ git subtree pull --prefix=docker/ros_noetic \
 > **注意事项**：
 > - 本地修改由 git 正常追踪。
 > - 若上游改了你也修改过的文件，`subtree pull` 会产生 merge conflict，需手动解决。
-> - **不要**直接修改 subtree 内的 `docker_template/` — 那是 env repo 自己的 subtree。
+> - **不要**直接修改 subtree 内的 `template/` — 那是 env repo 自己的 subtree。
 
 ## 设置
 
@@ -245,7 +245,7 @@ graph TD
     sys --> base["base\nsudo・git・vim・tmux・terminator・python3..."]:::stage
     base --> devel["devel\ncatkin-tools・shell config・pip"]:::stage
 
-    bats-src --> test["test  ⚡ 临时性\nsmoke_test/ 执行后即丢"]:::ephemeral
+    bats-src --> test["test  ⚡ 临时性\nsmoke/ 执行后即丢"]:::ephemeral
     bats-ext --> test
     devel --> test
 
@@ -267,13 +267,13 @@ graph TD
 | `sys` | `ros:noetic-ros-base-focal` | OS 基础：用户/组、语言、时区 |
 | `base` | `sys` | 通用开发工具（apt） |
 | `devel` | `base` | 完整开发环境，含 shell 设置 |
-| `test` | `devel` | 注入 bats，执行 smoke_test/，build 完即丢 |
+| `test` | `devel` | 注入 bats，执行 smoke/，build 完即丢 |
 | `runtime-base` | `sys` | 最小化 runtime 基底，无 dev tools |
 | `runtime` | `runtime-base` | 加入应用所需 ROS packages |
 
 ## Smoke Tests
 
-位于 `test/smoke_test/`，在 `docker build --target test` 时自动执行，共 **48** 项。
+位于 `test/smoke/`，在 `docker build --target test` 时自动执行，共 **48** 项。
 
 <details>
 <summary>展开查看测试详情</summary>
@@ -366,22 +366,22 @@ ros_noetic/
 │   ├── README.zh-CN.md          # 简体中文
 │   └── README.ja.md             # 日文
 ├── .github/workflows/           # CI/CD
-│   └── main.yaml                # CI/CD (docker_template reusable workflows)
+│   └── main.yaml                # CI/CD (template reusable workflows)
 ├── test/
-│   └── smoke_test/              # Bats 环境测试
+│   └── smoke/              # Bats 环境测试
 │       └── ros_env.bats         # Repo-specific
-├── docker_template/             # git subtree (v0.3.0)
+├── template/             # git subtree (v0.3.0)
 │   ├── build.sh, run.sh, ...    # Shared scripts
 │   ├── setup.sh                 # .env generation
-│   ├── smoke_test/              # Shared smoke tests
+│   ├── smoke/              # Shared smoke tests
 │   └── config/                  # shell/pip/terminator/tmux
-└── .docker_template_version
+└── .template_version
 ```
 
-## 更新 docker_template
+## 更新 template
 
 ```bash
-# Or use: ./docker_template/scripts/upgrade.sh
-git subtree pull --prefix=docker_template \
-    https://github.com/ycpss91255-docker/docker_template.git v0.3.0 --squash
+# Or use: ./template/scripts/upgrade.sh
+git subtree pull --prefix=template \
+    https://github.com/ycpss91255-docker/template.git v0.3.0 --squash
 ```
