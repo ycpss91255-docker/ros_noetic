@@ -233,29 +233,25 @@ SETUP_LANG=zh ./build.sh
 
 ```mermaid
 graph TD
-    EXT1["bats/bats:latest"]:::external
-    EXT2["alpine:latest"]:::external
-    EXT3["ros:noetic-ros-base-focal"]:::external
+    EXT1["bats/bats:latest"]
+    EXT2["alpine:latest"]
+    EXT3["ros:noetic-ros-base-focal"]
 
-    EXT1 --> bats-src["bats-src"]:::tool
-    EXT2 --> bats-ext["bats-extensions"]:::tool
+    EXT1 --> bats-src["bats-src"]
+    EXT2 --> bats-ext["bats-extensions"]
 
-    EXT3 --> sys["sys\nユーザー/グループ・ロケール・タイムゾーン"]:::stage
+    EXT3 --> sys["sys\nユーザー/グループ・ロケール・タイムゾーン"]
 
-    sys --> base["base\nsudo・git・vim・tmux・terminator・python3..."]:::stage
-    base --> devel["devel\ncatkin-tools・shell config・pip"]:::stage
+    sys --> base["base\nsudo・git・vim・tmux・terminator・python3..."]
+    base --> devel["devel\ncatkin-tools・shell config・pip"]
 
-    bats-src --> test["test  ⚡ 一時的\nsmoke/ 実行後に破棄"]:::ephemeral
+    bats-src --> test["test  ⚡ 一時的\nsmoke/ 実行後に破棄"]
     bats-ext --> test
     devel --> test
 
-    sys --> runtime-base["runtime-base\nsudo・tini"]:::stage
-    runtime-base --> runtime["runtime\n+ 必要な ROS packages"]:::stage
+    sys --> runtime-base["runtime-base\nsudo・tini"]
+    runtime-base --> runtime["runtime\n+ 必要な ROS packages"]
 
-    classDef external fill:#555,color:#fff,stroke:#999
-    classDef tool fill:#8B6914,color:#fff,stroke:#c8960c
-    classDef stage fill:#1a5276,color:#fff,stroke:#2980b9
-    classDef ephemeral fill:#6e2c00,color:#fff,stroke:#e67e22,stroke-dasharray:5 5
 ```
 
 ### Stage 説明
