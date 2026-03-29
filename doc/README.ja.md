@@ -20,7 +20,7 @@
 - [アーキテクチャ](#アーキテクチャ)
 - [smoke test](#smoke test)
 - [ディレクトリ構成](#ディレクトリ構成)
-- [docker\_template の更新](#docker_template-の更新)
+- [docker\_template の更新](#template-の更新)
 
 ---
 
@@ -30,7 +30,7 @@
 - **Smoke Test**：ビルド時に Bats テストを自動実行し環境の正確性を検証
 - **Docker Compose**：1 つの `compose.yaml` で全 target を管理
 - **自動検出**：`setup.sh` が UID/GID/workspace を自動検出し `.env` を生成
-- **モジュール化設定**：shell config は [docker_template](https://github.com/ycpss91255-docker/docker_template) subtree で管理
+- **モジュール化設定**：shell config は [template](https://github.com/ycpss91255-docker/template) subtree で管理
 - **X11 転送**：GUI アプリケーション対応（RViz、Terminator 等）
 
 ## クイックスタート
@@ -113,7 +113,7 @@ my_robot_project/
 │   ├── run.sh
 │   ├── compose.yaml
 │   ├── Dockerfile
-│   └── docker_template/
+│   └── template/
 └── ...
 ```
 
@@ -150,7 +150,7 @@ git subtree pull --prefix=docker/ros_noetic \
 > **注意事項**：
 > - ローカルの変更は git で通常通り追跡されます。
 > - 上流があなたが変更したファイルも変更した場合、`subtree pull` で merge conflict が発生する可能性があり、手動で解決が必要です。
-> - subtree 内の `docker_template/` は**直接変更しないでください** — env リポジトリ自身の subtree として管理されています。
+> - subtree 内の `template/` は**直接変更しないでください** — env リポジトリ自身の subtree として管理されています。
 
 ## 設定
 
@@ -245,7 +245,7 @@ graph TD
     sys --> base["base\nsudo・git・vim・tmux・terminator・python3..."]:::stage
     base --> devel["devel\ncatkin-tools・shell config・pip"]:::stage
 
-    bats-src --> test["test  ⚡ 一時的\nsmoke_test/ 実行後に破棄"]:::ephemeral
+    bats-src --> test["test  ⚡ 一時的\nsmoke/ 実行後に破棄"]:::ephemeral
     bats-ext --> test
     devel --> test
 
@@ -267,13 +267,13 @@ graph TD
 | `sys` | `ros:noetic-ros-base-focal` | OS 基盤：ユーザー/グループ、ロケール、タイムゾーン |
 | `base` | `sys` | 汎用開発ツール（apt） |
 | `devel` | `base` | フル開発環境、shell 設定含む |
-| `test` | `devel` | bats を注入、smoke_test/ を実行、ビルド後に破棄 |
+| `test` | `devel` | bats を注入、smoke/ を実行、ビルド後に破棄 |
 | `runtime-base` | `sys` | 最小化 runtime ベース、dev tools なし |
 | `runtime` | `runtime-base` | アプリに必要な ROS packages を追加 |
 
 ## smoke test
 
-`test/smoke_test/` に配置、`docker build --target test` 時に自動実行、合計 **48** 項目。
+`test/smoke/` に配置、`docker build --target test` 時に自動実行、合計 **48** 項目。
 
 <details>
 <summary>クリックしてテスト詳細を表示</summary>
@@ -366,22 +366,22 @@ ros_noetic/
 │   ├── README.zh-CN.md          # 簡体字中国語
 │   └── README.ja.md             # 日本語
 ├── .github/workflows/           # CI/CD
-│   └── main.yaml                # CI/CD (docker_template reusable workflows)
+│   └── main.yaml                # CI/CD (template reusable workflows)
 ├── test/
-│   └── smoke_test/              # Bats 環境テスト
+│   └── smoke/              # Bats 環境テスト
 │       └── ros_env.bats         # Repo-specific
-├── docker_template/             # git subtree (v0.3.0)
+├── template/             # git subtree (v0.3.0)
 │   ├── build.sh, run.sh, ...    # Shared scripts
 │   ├── setup.sh                 # .env generation
-│   ├── smoke_test/              # Shared smoke tests
+│   ├── smoke/              # Shared smoke tests
 │   └── config/                  # shell/pip/terminator/tmux
-└── .docker_template_version
+└── .template_version
 ```
 
-## docker_template の更新
+## template の更新
 
 ```bash
-# Or use: ./docker_template/scripts/upgrade.sh
-git subtree pull --prefix=docker_template \
-    https://github.com/ycpss91255-docker/docker_template.git v0.3.0 --squash
+# Or use: ./template/scripts/upgrade.sh
+git subtree pull --prefix=template \
+    https://github.com/ycpss91255-docker/template.git v0.3.0 --squash
 ```
