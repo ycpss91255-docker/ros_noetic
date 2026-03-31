@@ -71,7 +71,8 @@ ENV LC_ALL="en_US.UTF-8"
 ENV LANG="en_US.UTF-8"
 ENV LANGUAGE="en_US:en"
 
-RUN sed -i 's@archive.ubuntu.com@tw.archive.ubuntu.com@g' /etc/apt/sources.list && \
+ARG APT_MIRROR_UBUNTU="tw.archive.ubuntu.com"
+RUN sed -i "s@archive.ubuntu.com@${APT_MIRROR_UBUNTU}@g" /etc/apt/sources.list || true && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         tzdata \
