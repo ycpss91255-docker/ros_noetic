@@ -124,6 +124,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-osrf-pycommon \
         python3-catkin-tools \
+        ros-noetic-plotjuggler-ros \
         && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
