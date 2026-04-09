@@ -5,7 +5,7 @@ setup() {
 
     # Source setup.sh functions only (main is guarded)
     # shellcheck disable=SC1091
-    source /source/script/setup.sh
+    source /source/script/docker/setup.sh
 
     create_mock_dir
     TEMP_DIR="$(mktemp -d)"
@@ -148,15 +148,16 @@ esac'
     assert_equal "${_result}" "project"
 }
 
-@test "detect_image_name returns unknown for plain directory" {
+@test "detect_image_name returns unknown for plain directory (default conf)" {
+    # default conf only has @env_example/prefix:docker_/suffix:_ws (no @basename)
     local _result
     detect_image_name _result "/home/user/projects/ros_noetic"
     assert_equal "${_result}" "unknown"
 }
 
-@test "detect_image_name returns unknown for generic path" {
+@test "detect_image_name returns unknown for generic path (default conf)" {
     local _result
-    detect_image_name _result "/home/user/MyProject"
+    detect_image_name _result "/home/user/myproject"
     assert_equal "${_result}" "unknown"
 }
 
@@ -164,6 +165,123 @@ esac'
     local _result
     detect_image_name _result "/home/user/MyApp_ws/src/docker"
     assert_equal "${_result}" "myapp"
+}
+
+# ════════════════════════════════════════════════════════════════════
+# detect_image_name: image_name.conf rule engine
+# ════════════════════════════════════════════════════════════════════
+
+@test "detect_image_name uses repo-level image_name.conf when present" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    cat > "${_conf}" <<EOF
+prefix:foo_
+@basename
+EOF
+    local _result
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/foo_myapp"
+    assert_equal "${_result}" "myapp"
+}
+
+@test "detect_image_name auto-discovers image_name.conf via BASE_PATH" {
+    cat > "${TEMP_DIR}/image_name.conf" <<EOF
+prefix:bar_
+@basename
+EOF
+    local _result
+    BASE_PATH="${TEMP_DIR}" detect_image_name _result "/home/user/bar_myapp"
+    assert_equal "${_result}" "myapp"
+}
+
+@test "detect_image_name reads env_example rule from conf" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    local _example="${TEMP_DIR}/.env.example"
+    cat > "${_conf}" <<EOF
+@env_example
+@basename
+EOF
+    echo "IMAGE_NAME=from_example" > "${_example}"
+    local _result
+    BASE_PATH="${TEMP_DIR}" IMAGE_NAME_CONF="${_conf}" \
+        detect_image_name _result "/home/user/some_dir"
+    assert_equal "${_result}" "from_example"
+}
+
+@test "detect_image_name applies rules in order (first match wins)" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    cat > "${_conf}" <<EOF
+prefix:docker_
+suffix:_ws
+@basename
+EOF
+    local _result
+    # path has both docker_ and _ws — prefix wins
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/myapp_ws/src/docker_nav"
+    assert_equal "${_result}" "nav"
+}
+
+@test "detect_image_name skips comments and empty lines in conf" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    cat > "${_conf}" <<EOF
+# This is a comment
+prefix:foo_
+
+# Another comment
+@basename
+EOF
+    local _result
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/foo_myapp"
+    assert_equal "${_result}" "myapp"
+}
+
+@test "detect_image_name skips whitespace-only lines in conf" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    printf 'prefix:foo_\n   \n\t\n@basename\n' > "${_conf}"
+    local _result
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/foo_myapp"
+    assert_equal "${_result}" "myapp"
+}
+
+@test "detect_image_name returns unknown when no rule matches and no basename" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    cat > "${_conf}" <<EOF
+prefix:nonexistent_
+EOF
+    local _result
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/myapp"
+    assert_equal "${_result}" "unknown"
+}
+
+@test "detect_image_name uses @basename when no other rule matches" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    cat > "${_conf}" <<EOF
+prefix:nonexistent_
+@basename
+EOF
+    local _result
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/myapp"
+    assert_equal "${_result}" "myapp"
+}
+
+@test "detect_image_name applies @default:<value> as fallback" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    cat > "${_conf}" <<EOF
+prefix:nonexistent_
+@default:my_repo
+EOF
+    local _result
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/myapp"
+    assert_equal "${_result}" "my_repo"
+}
+
+@test "detect_image_name @default:<value> is skipped if earlier rule matches" {
+    local _conf="${TEMP_DIR}/image_name.conf"
+    cat > "${_conf}" <<EOF
+prefix:foo_
+@default:my_repo
+EOF
+    local _result
+    IMAGE_NAME_CONF="${_conf}" detect_image_name _result "/home/user/foo_realname"
+    assert_equal "${_result}" "realname"
 }
 
 # ════════════════════════════════════════════════════════════════════
@@ -214,7 +332,8 @@ esac'
     write_env "${_env_file}" \
         "testuser" "testgroup" "1001" "1001" \
         "x86_64" "dockerhub" "false" \
-        "ros_noetic" "/workspace"
+        "ros_noetic" "/workspace" \
+        "tw.archive.ubuntu.com" "mirror.twds.com.tw"
 
     assert [ -f "${_env_file}" ]
     run grep "USER_NAME=testuser"        "${_env_file}"; assert_success
@@ -228,6 +347,24 @@ esac'
     run grep "WS_PATH=/workspace"        "${_env_file}"; assert_success
 }
 
+@test "write_env includes APT_MIRROR_UBUNTU" {
+    local _env_file="${TEMP_DIR}/.env"
+    write_env "${_env_file}" \
+        "u" "g" "1000" "1000" "x86_64" "hub" "false" "img" "/ws" \
+        "tw.archive.ubuntu.com" "mirror.twds.com.tw"
+    run grep "APT_MIRROR_UBUNTU=tw.archive.ubuntu.com" "${_env_file}"
+    assert_success
+}
+
+@test "write_env includes APT_MIRROR_DEBIAN" {
+    local _env_file="${TEMP_DIR}/.env"
+    write_env "${_env_file}" \
+        "u" "g" "1000" "1000" "x86_64" "hub" "false" "img" "/ws" \
+        "tw.archive.ubuntu.com" "mirror.twds.com.tw"
+    run grep "APT_MIRROR_DEBIAN=mirror.twds.com.tw" "${_env_file}"
+    assert_success
+}
+
 # ════════════════════════════════════════════════════════════════════
 # main
 # ════════════════════════════════════════════════════════════════════
@@ -236,7 +373,7 @@ esac'
     local _ws="${TEMP_DIR}/test_ws"
     mkdir -p "${_ws}"
     run bash -c "
-        source /source/script/setup.sh
+        source /source/script/docker/setup.sh
         detect_ws_path() { local -n _o=\$1; _o='${_ws}'; }
         main --base-path '${TEMP_DIR}'
     "
@@ -251,7 +388,7 @@ esac'
 WS_PATH=${_ws}
 EOF
     run bash -c "
-        source /source/script/setup.sh
+        source /source/script/docker/setup.sh
         main --base-path '${TEMP_DIR}'
     "
     assert_success
@@ -266,7 +403,7 @@ EOF
 WS_PATH=/this/path/does/not/exist
 EOF
     run bash -c "
-        source /source/script/setup.sh
+        source /source/script/docker/setup.sh
         detect_ws_path() { local -n _o=\$1; _o='${_new_ws}'; }
         main --base-path '${TEMP_DIR}'
     "
@@ -275,21 +412,59 @@ EOF
     assert_success
 }
 
-@test "main reads IMAGE_NAME from .env.example when detection returns unknown" {
+@test "main: env_example rule reads IMAGE_NAME from .env.example" {
+    # Default conf has env_example before basename, so .env.example wins
     local _ws="${TEMP_DIR}/test_ws"
     local _proj="${TEMP_DIR}/my_generic_project"
     mkdir -p "${_ws}" "${_proj}"
 
-    # Create .env.example with IMAGE_NAME
     echo "IMAGE_NAME=my_custom_image" > "${_proj}/.env.example"
 
     run bash -c "
-        source /source/script/setup.sh
+        source /source/script/docker/setup.sh
         detect_ws_path() { local -n _o=\$1; _o='${_ws}'; }
         main --base-path '${_proj}'
     "
     assert_success
     run grep 'IMAGE_NAME=my_custom_image' "${_proj}/.env"
+    assert_success
+}
+
+@test "main warns when conf has no fallback and detection fails" {
+    # Custom conf without basename rule, no .env.example, no matching prefix/suffix
+    local _ws="${TEMP_DIR}/test_ws"
+    local _proj="${TEMP_DIR}/my_generic_project"
+    mkdir -p "${_ws}" "${_proj}"
+
+    cat > "${_proj}/image_name.conf" <<EOF
+prefix:nonexistent_
+EOF
+
+    run bash -c "
+        source /source/script/docker/setup.sh
+        detect_ws_path() { local -n _o=\$1; _o='${_ws}'; }
+        main --base-path '${_proj}'
+    "
+    assert_success
+    assert_line --partial "WARNING"
+    run grep 'IMAGE_NAME=unknown' "${_proj}/.env"
+    assert_success
+}
+
+@test "main: default conf @default:unknown applies for repo without docker_/_ws naming" {
+    local _ws="${TEMP_DIR}/test_ws"
+    local _proj="${TEMP_DIR}/my_generic_project"
+    mkdir -p "${_ws}" "${_proj}"
+
+    run bash -c "
+        source /source/script/docker/setup.sh
+        detect_ws_path() { local -n _o=\$1; _o='${_ws}'; }
+        main --base-path '${_proj}'
+    "
+    assert_success
+    assert_line --partial "INFO"
+    assert_line --partial "@default"
+    run grep 'IMAGE_NAME=unknown' "${_proj}/.env"
     assert_success
 }
 
@@ -302,21 +477,20 @@ EOF
 }
 
 @test "default _base_path resolves to repo root, not script dir" {
-    # Regression: setup.sh lives at template/script/setup.sh
-    # Default _base_path must go up 2 levels to repo root
+    # Regression: setup.sh lives at template/script/docker/setup.sh
+    # Default _base_path must go up 3 levels to repo root
     local _repo_root="${TEMP_DIR}/docker_myapp"
-    mkdir -p "${_repo_root}/template/script"
-    cp /source/script/setup.sh "${_repo_root}/template/script/setup.sh"
-
-    # Create .env.example as fallback for IMAGE_NAME
-    echo "IMAGE_NAME=myapp" > "${_repo_root}/.env.example"
+    mkdir -p "${_repo_root}/template/script/docker" "${_repo_root}/template/config"
+    cp /source/script/docker/setup.sh "${_repo_root}/template/script/docker/setup.sh"
+    cp /source/script/docker/i18n.sh "${_repo_root}/template/script/docker/i18n.sh"
+    cp /source/config/image_name.conf "${_repo_root}/template/config/image_name.conf"
 
     # Create a dummy ws for detect_ws_path
     local _ws="${TEMP_DIR}/myapp_ws"
     mkdir -p "${_ws}"
 
     # Run setup.sh directly (no --base-path), simulating user calling it
-    run bash -c "cd '${_repo_root}' && bash template/script/setup.sh"
+    run bash -c "cd '${_repo_root}' && bash template/script/docker/setup.sh"
     assert_success
 
     # .env should be at repo root, not in template/script/
@@ -329,13 +503,47 @@ EOF
 }
 
 @test "main returns error on unknown argument" {
-    run bash -c "source /source/script/setup.sh; main --invalid-arg"
+    run bash -c "source /source/script/docker/setup.sh; main --invalid-arg"
     assert_failure
 }
 
 @test "main returns error when --base-path value is missing" {
-    run bash -c "source /source/script/setup.sh; main --base-path"
+    run bash -c "source /source/script/docker/setup.sh; main --base-path"
     assert_failure
+}
+
+@test "main sets APT_MIRROR defaults in fresh .env" {
+    local _ws="${TEMP_DIR}/test_ws"
+    mkdir -p "${_ws}"
+    run bash -c "
+        source /source/script/docker/setup.sh
+        detect_ws_path() { local -n _o=\$1; _o='${_ws}'; }
+        main --base-path '${TEMP_DIR}'
+    "
+    assert_success
+    run grep "APT_MIRROR_UBUNTU=tw.archive.ubuntu.com" "${TEMP_DIR}/.env"
+    assert_success
+    run grep "APT_MIRROR_DEBIAN=mirror.twds.com.tw" "${TEMP_DIR}/.env"
+    assert_success
+}
+
+@test "main preserves existing APT_MIRROR values from .env" {
+    local _ws="${TEMP_DIR}/existing_ws"
+    mkdir -p "${_ws}"
+    cat > "${TEMP_DIR}/.env" << EOF
+WS_PATH=${_ws}
+APT_MIRROR_UBUNTU=us.archive.ubuntu.com
+APT_MIRROR_DEBIAN=deb.debian.org
+EOF
+    run bash -c "
+        source /source/script/docker/setup.sh
+        main --base-path '${TEMP_DIR}'
+    "
+    assert_success
+    run grep "APT_MIRROR_UBUNTU=us.archive.ubuntu.com" "${TEMP_DIR}/.env"
+    assert_success
+    run grep "APT_MIRROR_DEBIAN=deb.debian.org" "${TEMP_DIR}/.env"
+    assert_success
 }
 
 # ════════════════════════════════════════════════════════════════════
@@ -415,7 +623,7 @@ EOF
     local _ws="${TEMP_DIR}/test_ws"
     mkdir -p "${_ws}"
     run bash -c "
-        source /source/script/setup.sh
+        source /source/script/docker/setup.sh
         detect_ws_path() { local -n _o=\$1; _o='${_ws}'; }
         main --base-path '${TEMP_DIR}' --lang zh
     "
@@ -424,6 +632,6 @@ EOF
 }
 
 @test "main --lang requires a value" {
-    run bash -c "source /source/script/setup.sh; main --lang"
+    run bash -c "source /source/script/docker/setup.sh; main --lang"
     assert_failure
 }
