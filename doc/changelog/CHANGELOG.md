@@ -10,6 +10,9 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - revert display mount to XDG_RUNTIME_DIR:rw
 - use tmpfs for XDG_RUNTIME_DIR + Wayland socket mount
+- Dockerfile: migrate hard-coded APT mirror `tw.archive.ubuntu.com` to
+  configurable `ARG APT_MIRROR_UBUNTU` pattern (aligns with sibling repos
+  and template convention). Adds `|| true` guard per CLAUDE.md.
 
 ## [v2.0.0] - 2026-03-28
 
