@@ -86,7 +86,7 @@ docker compose --profile test build test
 
 ```bash
 ./build.sh runtime
-./run.sh runtime
+./run.sh -t runtime
 # 或
 docker compose --profile runtime build runtime
 docker compose --profile runtime run --rm runtime
@@ -275,37 +275,44 @@ graph TD
 
 ```text
 ros_noetic/
-├── compose.yaml                 # Docker Compose 定义
 ├── Dockerfile                   # 多阶段构建
-├── build.sh                     # 构建脚本（任意目录可执行）
-├── run.sh                       # 启动脚本（任意目录可执行）
-├── exec.sh                      # 进入已启动的容器
-├── stop.sh                      # 停止并移除容器
-├── .env.example                 # 环境变量模板
-├── .hadolint.yaml               # Hadolint 忽略规则
+├── setup.conf                   # setup.sh 的 repo 层覆盖配置
+├── build.sh                     # → template/script/docker/build.sh
+├── run.sh                       # → template/script/docker/run.sh
+├── exec.sh                      # → template/script/docker/exec.sh
+├── stop.sh                      # → template/script/docker/stop.sh
+├── setup.sh                     # → template/script/docker/setup.sh
+├── setup_tui.sh                 # → template/script/docker/setup_tui.sh
+├── Makefile                     # → template/script/docker/Makefile
+├── .hadolint.yaml               # → template/.hadolint.yaml
+├── .env.example                 # IMAGE_NAME fallback
+├── config/                      # shell/pip/terminator/tmux 配置（从 template 复制）
 ├── script/
 │   └── entrypoint.sh            # 容器入口点
 ├── doc/
 │   ├── README.zh-TW.md          # 繁体中文
 │   ├── README.zh-CN.md          # 简体中文
-│   └── README.ja.md             # 日文
-├── .github/workflows/           # CI/CD
-│   └── main.yaml                # CI/CD (template reusable workflows)
+│   ├── README.ja.md             # 日文
+│   ├── test/TEST.md             # Smoke test 文档
+│   └── changelog/CHANGELOG.md   # 变更记录
+├── .github/workflows/
+│   └── main.yaml                # CI/CD（调用 template reusable workflows）
 ├── test/
-│   └── smoke/              # Bats 环境测试
-│       └── ros_env.bats         # Repo-specific
-├── template/             # git subtree (v0.3.0)
-│   ├── build.sh, run.sh, ...    # Shared scripts
-│   ├── setup.sh                 # .env generation
-│   ├── smoke/              # Shared smoke tests
-│   └── config/                  # shell/pip/terminator/tmux
-└── .template_version
+│   └── smoke/
+│       └── ros_env.bats         # Repo 专属测试
+└── template/                    # git subtree（版本记录于 template/.version）
 ```
+
+> `compose.yaml` 与 `.env` 为 `setup.sh` 依 `setup.conf` + 系统检测产生的衍生文件，
+> 二者均已加入 `.gitignore`。
 
 ## 更新 template
 
 ```bash
-# Or use: ./template/scripts/upgrade.sh
-git subtree pull --prefix=template \
-    https://github.com/ycpss91255-docker/template.git v0.3.0 --squash
+./template/upgrade.sh             # 升级到最新 tag
+./template/upgrade.sh v0.10.2     # 指定版本
+./template/upgrade.sh --check     # 检查是否有可升级版本
 ```
+
+脚本会一次处理 `git subtree pull`、完整性检查、`init.sh` symlink 重整，
+以及 `main.yaml` 的 `@vX.Y.Z` workflow 引用更新。

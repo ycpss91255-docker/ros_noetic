@@ -1,1 +1,6 @@
 .env
+.env.bak
+compose.yaml
+setup.conf.bak
+coverage/
+.Dockerfile.generated

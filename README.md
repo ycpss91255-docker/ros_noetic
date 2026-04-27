@@ -86,7 +86,7 @@ Minimal image with only essential ROS packages.
 
 ```bash
 ./build.sh runtime
-./run.sh runtime
+./run.sh -t runtime
 # or
 docker compose --profile runtime build runtime
 docker compose --profile runtime run --rm runtime
@@ -275,37 +275,44 @@ See [TEST.md](doc/test/TEST.md) for details.
 
 ```text
 ros_noetic/
-├── compose.yaml                 # Docker Compose definition
 ├── Dockerfile                   # Multi-stage build
-├── build.sh                     # Build script (runs from any directory)
-├── run.sh                       # Run script (runs from any directory)
-├── exec.sh                      # Enter running container
-├── stop.sh                      # Stop and remove containers
-├── .env.example                 # Environment variable template
-├── .hadolint.yaml               # Hadolint ignore rules
+├── setup.conf                   # Per-repo overrides for setup.sh
+├── build.sh                     # → template/script/docker/build.sh
+├── run.sh                       # → template/script/docker/run.sh
+├── exec.sh                      # → template/script/docker/exec.sh
+├── stop.sh                      # → template/script/docker/stop.sh
+├── setup.sh                     # → template/script/docker/setup.sh
+├── setup_tui.sh                 # → template/script/docker/setup_tui.sh
+├── Makefile                     # → template/script/docker/Makefile
+├── .hadolint.yaml               # → template/.hadolint.yaml
+├── .env.example                 # IMAGE_NAME fallback
+├── config/                      # shell/pip/terminator/tmux config (seeded from template)
 ├── script/
 │   └── entrypoint.sh            # Container entrypoint
 ├── doc/
 │   ├── README.zh-TW.md          # Traditional Chinese
 │   ├── README.zh-CN.md          # Simplified Chinese
-│   └── README.ja.md             # Japanese
+│   ├── README.ja.md             # Japanese
+│   ├── test/TEST.md             # Smoke test reference
+│   └── changelog/CHANGELOG.md   # Change history
 ├── .github/workflows/
 │   └── main.yaml                # CI/CD (calls template reusable workflows)
 ├── test/
 │   └── smoke/
 │       └── ros_env.bats         # Repo-specific tests
-├── template/             # git subtree (v0.3.0)
-│   ├── build.sh, run.sh, ...    # Shared scripts (symlinked at root)
-│   ├── setup.sh                 # System detection + .env generation
-│   ├── smoke/              # Shared smoke tests
-│   └── config/                  # shell/pip/terminator/tmux config
-└── .template_version
+└── template/                    # git subtree (version pinned in template/.version)
 ```
+
+> `compose.yaml` and `.env` are derived artifacts produced by `setup.sh` from
+> `setup.conf` + system detection; both are gitignored.
 
 ## Updating template
 
 ```bash
-# Or use: ./template/scripts/upgrade.sh
-git subtree pull --prefix=template \
-    https://github.com/ycpss91255-docker/template.git v0.3.0 --squash
+./template/upgrade.sh             # upgrade to latest tag
+./template/upgrade.sh v0.10.2     # pin to a specific version
+./template/upgrade.sh --check     # check if an update is available
 ```
+
+The script handles `git subtree pull`, integrity checks, `init.sh` symlink
+resync, and rewrites `main.yaml`'s `@vX.Y.Z` workflow refs in one shot.
