@@ -150,7 +150,6 @@ COPY --from=test-tools-stage /usr/local/bin/hadolint /usr/local/bin/hadolint
 # Lint: ShellCheck (.sh) + Hadolint (Dockerfile)
 COPY .hadolint.yaml /lint/.hadolint.yaml
 COPY Dockerfile /lint/Dockerfile
-COPY compose.yaml /lint/compose.yaml
 COPY *.sh /lint/
 COPY template/script/docker/_lib.sh \
      template/script/docker/i18n.sh \
