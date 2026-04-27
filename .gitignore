@@ -1,6 +1,8 @@
-.env
-.env.bak
-compose.yaml
-setup.conf.bak
 coverage/
-.Dockerfile.generated
+.env
+multi_run/
+*.swp
+*.swo
+.DS_Store
+.vscode/
+.idea/
