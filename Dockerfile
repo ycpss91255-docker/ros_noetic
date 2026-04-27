@@ -1,26 +1,7 @@
 ARG ROS_DISTRO="noetic"
 ARG ROS_TAG="ros-base" # options: ros-base, desktop, desktop-full
 ARG UBUNTU_CODENAME="focal"
-
-############################## test tool sources ##############################
-FROM bats/bats:latest AS bats-src
-
-FROM alpine:latest AS bats-extensions
-RUN apk add --no-cache git && \
-    git clone --depth 1 -b v0.3.0 \
-        https://github.com/bats-core/bats-support /bats/bats-support && \
-    git clone --depth 1 -b v2.1.0 \
-        https://github.com/bats-core/bats-assert  /bats/bats-assert
-
-FROM alpine:latest AS lint-tools
-RUN apk add --no-cache curl xz && \
-    curl -fsSL \
-        https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz \
-        | tar -xJ -C /tmp && \
-    mv /tmp/shellcheck-v0.10.0/shellcheck /usr/local/bin/shellcheck && \
-    curl -fsSL -o /usr/local/bin/hadolint \
-        https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64 && \
-    chmod +x /usr/local/bin/hadolint
+ARG TEST_TOOLS_IMAGE="test-tools:local"
 
 ############################## sys ##############################
 FROM ros:${ROS_DISTRO}-${ROS_TAG}-${UBUNTU_CODENAME} AS sys
@@ -118,7 +99,9 @@ ARG USER
 ARG GROUP
 ARG ENTRYPOINT_FILE="script/entrypoint.sh"
 ARG CONFIG_DIR="/tmp/config"
-ARG CONFIG_SRC="template/config"
+# <repo>/config is a per-repo copy of template/config seeded by init.sh.
+# Edit files there freely; template upgrades do not touch this directory.
+ARG CONFIG_SRC="config"
 
 # ROS 1 dev tools
 RUN apt-get update && \
@@ -153,26 +136,32 @@ CMD ["bash"]
 # CMD ["tmux"]
 
 ############################## test (ephemeral) ##############################
+# Resolves to test-tools:local (local build.sh) or ghcr.io/.../test-tools:vX.Y.Z (CI).
+FROM ${TEST_TOOLS_IMAGE} AS test-tools-stage
+
 FROM devel AS test
 
 USER root
 
-# Install lint tools
-COPY --from=lint-tools /usr/local/bin/shellcheck /usr/local/bin/shellcheck
-COPY --from=lint-tools /usr/local/bin/hadolint /usr/local/bin/hadolint
+# Lint tools (from pre-built test-tools image; see TEST_TOOLS_IMAGE at top)
+COPY --from=test-tools-stage /usr/local/bin/shellcheck /usr/local/bin/shellcheck
+COPY --from=test-tools-stage /usr/local/bin/hadolint /usr/local/bin/hadolint
 
 # Lint: ShellCheck (.sh) + Hadolint (Dockerfile)
 COPY .hadolint.yaml /lint/.hadolint.yaml
 COPY Dockerfile /lint/Dockerfile
 COPY compose.yaml /lint/compose.yaml
 COPY *.sh /lint/
+COPY template/script/docker/_lib.sh \
+     template/script/docker/i18n.sh \
+     template/script/docker/_tui_conf.sh \
+     /lint/
 RUN shellcheck -S warning /lint/*.sh
 RUN cd /lint && hadolint Dockerfile
 
-# Install bats
-COPY --from=bats-src /opt/bats /opt/bats
-COPY --from=bats-src /usr/lib/bats /usr/lib/bats
-COPY --from=bats-extensions /bats /usr/lib/bats
+# Bats (from pre-built test-tools image; see TEST_TOOLS_IMAGE at top)
+COPY --from=test-tools-stage /opt/bats /opt/bats
+COPY --from=test-tools-stage /usr/lib/bats /usr/lib/bats
 RUN ln -sf /opt/bats/bin/bats /usr/local/bin/bats
 
 ENV BATS_LIB_PATH="/usr/lib/bats"

@@ -86,7 +86,7 @@ docker compose --profile test build test
 
 ```bash
 ./build.sh runtime
-./run.sh runtime
+./run.sh -t runtime
 # または
 docker compose --profile runtime build runtime
 docker compose --profile runtime run --rm runtime
@@ -275,37 +275,44 @@ graph TD
 
 ```text
 ros_noetic/
-├── compose.yaml                 # Docker Compose 定義
 ├── Dockerfile                   # マルチステージビルド
-├── build.sh                     # ビルドスクリプト（任意のディレクトリから実行可能）
-├── run.sh                       # 起動スクリプト（任意のディレクトリから実行可能）
-├── exec.sh                      # 起動中のコンテナに接続
-├── stop.sh                      # コンテナの停止・削除
-├── .env.example                 # 環境変数テンプレート
-├── .hadolint.yaml               # Hadolint 無視ルール
+├── setup.conf                   # setup.sh の repo レベル上書き設定
+├── build.sh                     # → template/script/docker/build.sh
+├── run.sh                       # → template/script/docker/run.sh
+├── exec.sh                      # → template/script/docker/exec.sh
+├── stop.sh                      # → template/script/docker/stop.sh
+├── setup.sh                     # → template/script/docker/setup.sh
+├── setup_tui.sh                 # → template/script/docker/setup_tui.sh
+├── Makefile                     # → template/script/docker/Makefile
+├── .hadolint.yaml               # → template/.hadolint.yaml
+├── .env.example                 # IMAGE_NAME fallback
+├── config/                      # shell/pip/terminator/tmux 設定（template からコピー）
 ├── script/
 │   └── entrypoint.sh            # コンテナエントリポイント
 ├── doc/
 │   ├── README.zh-TW.md          # 繁体字中国語
 │   ├── README.zh-CN.md          # 簡体字中国語
-│   └── README.ja.md             # 日本語
-├── .github/workflows/           # CI/CD
-│   └── main.yaml                # CI/CD (template reusable workflows)
+│   ├── README.ja.md             # 日本語
+│   ├── test/TEST.md             # Smoke test ドキュメント
+│   └── changelog/CHANGELOG.md   # 変更履歴
+├── .github/workflows/
+│   └── main.yaml                # CI/CD（template reusable workflows を呼び出し）
 ├── test/
-│   └── smoke/              # Bats 環境テスト
-│       └── ros_env.bats         # Repo-specific
-├── template/             # git subtree (v0.3.0)
-│   ├── build.sh, run.sh, ...    # Shared scripts
-│   ├── setup.sh                 # .env generation
-│   ├── smoke/              # Shared smoke tests
-│   └── config/                  # shell/pip/terminator/tmux
-└── .template_version
+│   └── smoke/
+│       └── ros_env.bats         # Repo 固有テスト
+└── template/                    # git subtree（バージョンは template/.version で管理）
 ```
+
+> `compose.yaml` と `.env` は `setup.sh` が `setup.conf` + システム検出から生成する派生ファイルで、
+> 両方とも `.gitignore` に登録されています。
 
 ## template の更新
 
 ```bash
-# Or use: ./template/scripts/upgrade.sh
-git subtree pull --prefix=template \
-    https://github.com/ycpss91255-docker/template.git v0.3.0 --squash
+./template/upgrade.sh             # 最新タグへ更新
+./template/upgrade.sh v0.10.2     # 特定バージョンへ更新
+./template/upgrade.sh --check     # 更新があるか確認
 ```
+
+スクリプトは `git subtree pull`、整合性チェック、`init.sh` symlink 再同期、
+`main.yaml` の `@vX.Y.Z` workflow 参照書き換えをまとめて処理します。

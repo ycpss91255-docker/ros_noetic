@@ -19,6 +19,7 @@ jobs:
     uses: ycpss91255-docker/template/.github/workflows/build-worker.yaml@v0.10.2
     with:
       image_name: ros_noetic
+      test_tools_version: v0.10.2
       build_args: |
         ROS_DISTRO=noetic
         ROS_TAG=ros-base
