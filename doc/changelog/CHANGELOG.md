@@ -8,6 +8,15 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- Upgrade template subtree from `v0.10.2` to [v0.11.0](https://github.com/ycpss91255-docker/template/releases/tag/v0.11.0). Highlights (template Phase B of #49):
+  - `setup.sh` is now a git-style subcommand backend (`apply` / `check-drift` / `set` / `show` / `list` / `add` / `remove` / `reset`).
+  - **BREAKING upstream**: no-arg `setup.sh` no longer falls through to `apply`. `build.sh` / `run.sh` / `setup_tui.sh` / `init.sh` were all updated in template to pass `apply` explicitly. ros_noetic has no custom `setup.sh` callers, so no repo-side migration needed.
+  - `setup_tui.sh` whiptail flag fix (closes template #136 — Jetson arm64 minimal hosts without `dialog` no longer abort on first menu).
+- `main.yaml` pins workflows to `@v0.11.0` and passes `test_tools_version: v0.11.0`.
+
+## [v2.1.0] - 2026-04-27
+
+### Changed
 - Upgrade template subtree from v0.8.1 to v0.10.2. Notable downstream
   effects:
   - **BREAKING (run.sh)**: target moves behind `-t/--target`; positional
